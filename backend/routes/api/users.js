@@ -43,4 +43,28 @@ router.post('/register', function(req,res) {
         })
 })
 
+router.post('/login', function(req,res){
+    const email = req.body.email
+    const password = req.body.password
+    User.findOne({ email })
+        .then(user => {
+            if (!user) {
+                return res.status(400).json({email: "user not found"});
+            }
+            bcrypt.compare(password, user.password)
+                .then(isMatch => {
+                    if (isMatch){
+                        const payload = { id: user.id, name: user.name, avatar: user.avatar}
+                        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 }, (err, token) => {
+                            res.json({ success: true, token: "Bearer " + token})
+                        })
+                    } else {
+                        return res.status(400).json({ password: "password is incorrect"})
+                    }
+                })
+        })
+
+
+})
+
 module.exports = router
